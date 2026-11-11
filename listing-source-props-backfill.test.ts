@@ -35,11 +35,11 @@ describe("Listing source SQL backfill local rehearsal", () => {
     { maxQueryResultCount: 500, listingSearchTextColumns: [] },
   );
   const batchSql = readFileSync(
-    join(__dirname, "02-preview-batch.sql"),
+    join(__dirname, "scripts", "02-preview-batch.sql"),
     "utf8",
   );
   const verifySql = readFileSync(
-    join(__dirname, "03-verify-progress.sql"),
+    join(__dirname, "scripts", "03-verify-progress.sql"),
     "utf8",
   );
   const sourceFields = new Set([
