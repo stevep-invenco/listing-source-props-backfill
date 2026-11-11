@@ -1,0 +1,50 @@
+PostgreSQL 16.4 local lab. 100001 synthetic rows, 100 mismatches at the end of ID order. No partial index. Audit trigger disabled. UPDATE rolled back.
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                QUERY PLAN                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Result  (cost=817.60..817.61 rows=1 width=16) (actual time=25.398..25.400 rows=1 loops=1)
+   Buffers: shared hit=7615 dirtied=4 written=4
+   WAL: records=1142 bytes=115349
+   CTE candidates
+     ->  Limit  (cost=0.42..9.31 rows=100 width=12) (actual time=22.607..22.658 rows=100 loops=1)
+           Buffers: shared hit=3918
+           WAL: records=4 bytes=420
+           ->  Index Scan using "Listing_pkey" on "Listing"  (cost=0.42..8896.46 rows=100001 width=12) (actual time=22.606..22.653 rows=100 loops=1)
+                 Filter: (((fulfillment_strategy = 'STOCK'::"FulfillmentStrategy") AND ((stock_qty_available IS DISTINCT FROM qty_available) OR (stock_qty_on_hand IS DISTINCT FROM qty_on_hand) OR (stock_qty_expected IS DISTINCT FROM qty_expected) OR (stock_reconciled_at IS DISTINCT FROM reconciled_at) OR (assembly_qty_available IS NOT NULL) OR (assembly_qty_on_hand IS NOT NULL) OR (assembly_qty_expected IS NOT NULL) OR (assembly_reconciled_at IS NOT NULL))) OR ((fulfillment_strategy = ANY ('{BUNDLE,STOCK_THEN_ASSEMBLY}'::"FulfillmentStrategy"[])) AND ((assembly_qty_available IS DISTINCT FROM qty_available) OR (assembly_qty_on_hand IS DISTINCT FROM qty_on_hand) OR (assembly_qty_expected IS DISTINCT FROM qty_expected) OR (assembly_reconciled_at IS DISTINCT FROM reconciled_at) OR (stock_qty_available IS NOT NULL) OR (stock_qty_on_hand IS NOT NULL) OR (stock_qty_expected IS NOT NULL) OR (stock_reconciled_at IS NOT NULL))))
+                 Rows Removed by Filter: 99901
+                 Buffers: shared hit=3918
+                 WAL: records=4 bytes=420
+   CTE updated
+     ->  Update on "Listing" listing  (cost=2.67..803.77 rows=100 width=102) (actual time=0.132..2.690 rows=100 loops=1)
+           Buffers: shared hit=3697 dirtied=4 written=4
+           WAL: records=1138 bytes=114929
+           ->  Nested Loop  (cost=2.67..803.77 rows=100 width=102) (actual time=0.048..0.327 rows=100 loops=1)
+                 Buffers: shared hit=575
+                 ->  HashAggregate  (cost=2.25..3.25 rows=100 width=88) (actual time=0.032..0.041 rows=100 loops=1)
+                       Group Key: candidates.id
+                       Batches: 1  Memory Usage: 24kB
+                       ->  CTE Scan on candidates  (cost=0.00..2.00 rows=100 width=88) (actual time=0.009..0.017 rows=100 loops=1)
+                 ->  Index Scan using "Listing_pkey" on "Listing" listing  (cost=0.42..7.98 rows=1 width=42) (actual time=0.002..0.002 rows=1 loops=100)
+                       Index Cond: (id = candidates.id)
+                       Filter: (((fulfillment_strategy = 'STOCK'::"FulfillmentStrategy") AND ((stock_qty_available IS DISTINCT FROM qty_available) OR (stock_qty_on_hand IS DISTINCT FROM qty_on_hand) OR (stock_qty_expected IS DISTINCT FROM qty_expected) OR (stock_reconciled_at IS DISTINCT FROM reconciled_at) OR (assembly_qty_available IS NOT NULL) OR (assembly_qty_on_hand IS NOT NULL) OR (assembly_qty_expected IS NOT NULL) OR (assembly_reconciled_at IS NOT NULL))) OR ((fulfillment_strategy = ANY ('{BUNDLE,STOCK_THEN_ASSEMBLY}'::"FulfillmentStrategy"[])) AND ((assembly_qty_available IS DISTINCT FROM qty_available) OR (assembly_qty_on_hand IS DISTINCT FROM qty_on_hand) OR (assembly_qty_expected IS DISTINCT FROM qty_expected) OR (assembly_reconciled_at IS DISTINCT FROM reconciled_at) OR (stock_qty_available IS NOT NULL) OR (stock_qty_on_hand IS NOT NULL) OR (stock_qty_expected IS NOT NULL) OR (stock_reconciled_at IS NOT NULL))))
+                       Buffers: shared hit=488
+   InitPlan 3 (returns $4)
+     ->  Aggregate  (cost=2.25..2.26 rows=1 width=8) (actual time=22.684..22.684 rows=1 loops=1)
+           Buffers: shared hit=3918
+           WAL: records=4 bytes=420
+           ->  CTE Scan on candidates candidates_1  (cost=0.00..2.00 rows=100 width=0) (actual time=22.615..22.677 rows=100 loops=1)
+                 Buffers: shared hit=3918
+                 WAL: records=4 bytes=420
+   InitPlan 4 (returns $5)
+     ->  Aggregate  (cost=2.25..2.26 rows=1 width=8) (actual time=2.711..2.711 rows=1 loops=1)
+           Buffers: shared hit=3697 dirtied=4 written=4
+           WAL: records=1138 bytes=114929
+           ->  CTE Scan on updated  (cost=0.00..2.00 rows=100 width=0) (actual time=0.133..2.704 rows=100 loops=1)
+                 Buffers: shared hit=3697 dirtied=4 written=4
+                 WAL: records=1138 bytes=114929
+ Planning:
+   Buffers: shared hit=326
+ Planning Time: 0.488 ms
+ Execution Time: 25.485 ms
+(44 rows)
+
